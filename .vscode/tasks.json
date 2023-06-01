@@ -4,7 +4,24 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "zig build",
+            "command": "zig build -Dtrace=true -p ./debug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            }
+        },
+        {
+            "label": "build-release",
+            "type": "shell",
+            "command": "zig build -Drelease-fast=true -p ./release",
             "group": {
                 "kind": "build",
                 "isDefault": true
