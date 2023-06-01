@@ -15,6 +15,11 @@ pub fn disassembleChunk(self: *Chunk, name: []const u8, writer: Writer) !void {
 
 pub fn disassembleInstruction(self: *Chunk, offset: usize, writer: Writer) !usize {
     try writer.print("[{x:0>4}] ", .{offset});
+    if (offset > 0 and self.lines.items[offset] == self.lines.items[offset - 1]) {
+        try writer.print("    | ", .{});
+    } else {
+        try writer.print("{d: >5} ", .{self.lines.items[offset]});
+    }
     const instruction = self.code.items[offset];
     switch (@intToEnum(OpCode, instruction)) {
         .op_constant => return constantInstruction(.op_constant, self, offset, writer),
@@ -34,13 +39,13 @@ pub fn simpleInstruction(opcode: OpCode, offset: usize, writer: Writer) !usize {
 
 pub fn constantInstruction(opcode: OpCode, chunk: *Chunk, offset: usize, writer: Writer) !usize {
     const constant = chunk.code.items[offset + 1];
-    try writer.print("{s} [{d:0>4}] ", .{ @tagName(opcode), constant });
+    try writer.print("{s}\t{d: >4}: ", .{ @tagName(opcode), constant });
 
     try printValue(chunk.constants.items[constant], writer);
-    try writer.print("'\n", .{});
+    try writer.print("\n", .{});
     return offset + 2;
 }
 
 pub fn printValue(value: Value, writer: Writer) !void {
-    try writer.print("{d}", .{value});
+    try writer.print("'{}'", .{value});
 }

@@ -8,8 +8,8 @@ pub fn main() !void {
     const a = std.heap.c_allocator;
     var chunk = try Chunk.init(a);
     const constant = try chunk.addConstant(3.1415);
-    try chunk.writeOpCode(.op_constant);
-    try chunk.writeOffset(constant);
-    try chunk.writeOpCode(.op_return);
+    try chunk.writeOpCode(.op_constant, 123);
+    try chunk.writeOffset(constant, 123);
+    try chunk.writeOpCode(.op_return, 123);
     try debug.disassembleChunk(&chunk, "test", stdout);
 }

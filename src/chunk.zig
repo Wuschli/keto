@@ -2,6 +2,7 @@ const std = @import("std");
 const v = @import("./value.zig");
 const ValueArray = v.ValueArray;
 const Value = v.Value;
+const Line = u32;
 const Allocator = std.mem.Allocator;
 
 const ChunkError = error{
@@ -20,15 +21,18 @@ pub fn Chunk(comptime T: type) type {
 
         code: std.ArrayList(T),
         constants: ValueArray,
+        lines: std.ArrayList(Line),
         a: Allocator,
         freed: bool,
 
         pub fn init(a: Allocator) !Self {
             var code = std.ArrayList(T).init(a);
             var constants = ValueArray.init(a);
+            var lines = std.ArrayList(Line).init(a);
             return Self{
                 .code = code,
                 .constants = constants,
+                .lines = lines,
                 .a = a,
                 .freed = false,
             };
@@ -37,6 +41,7 @@ pub fn Chunk(comptime T: type) type {
         pub fn free(self: *Self) void {
             self.code.deinit();
             self.constants.deinit();
+            self.lines.deinit();
             self.freed = true;
         }
 
@@ -44,18 +49,19 @@ pub fn Chunk(comptime T: type) type {
             return self.code.items.len;
         }
 
-        pub fn writeOpCode(self: *Self, opCode: OpCode) !void {
-            try writeByte(self, comptime @enumToInt(opCode));
+        pub fn writeOpCode(self: *Self, opCode: OpCode, line: Line) !void {
+            try writeByte(self, comptime @enumToInt(opCode), line);
         }
 
-        pub fn writeOffset(self: *Self, offset: usize) !void {
-            try writeByte(self, comptime @truncate(u8, offset));
+        pub fn writeOffset(self: *Self, offset: usize, line: Line) !void {
+            try writeByte(self, comptime @truncate(u8, offset), line);
         }
 
-        pub fn writeByte(self: *Self, byte: T) !void {
+        pub fn writeByte(self: *Self, byte: T, line: Line) !void {
             if (self.freed)
                 return ChunkError.ChunkFreed;
             try self.code.append(byte);
+            try self.lines.append(line);
         }
 
         pub fn addConstant(self: *Self, value: Value) !usize {
@@ -83,7 +89,7 @@ test "write Byte" {
     const a = std.testing.allocator;
     var chunk = try Chunk(u8).init(a);
     defer chunk.free();
-    try chunk.writeByte(0xFF);
+    try chunk.writeByte(0xFF, 123);
     try std.testing.expect(chunk.code.items.len == 1);
 }
 
@@ -91,17 +97,17 @@ test "write OpCode" {
     const a = std.testing.allocator;
     var chunk = try Chunk(u8).init(a);
     defer chunk.free();
-    try chunk.writeOpCode(.op_return);
+    try chunk.writeOpCode(.op_return, 123);
     try std.testing.expect(chunk.code.items.len == 1);
 }
 
 test "free Chunk" {
     const a = std.testing.allocator;
     var chunk = try Chunk(u8).init(a);
-    try chunk.writeOpCode(.op_return);
+    try chunk.writeOpCode(.op_return, 123);
     try std.testing.expect(chunk.code.items.len == 1);
     chunk.free();
-    try std.testing.expectError(ChunkError.ChunkFreed, chunk.writeOpCode(.op_return));
+    try std.testing.expectError(ChunkError.ChunkFreed, chunk.writeOpCode(.op_return, 123));
 }
 
 test "add constant" {
