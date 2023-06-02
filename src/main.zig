@@ -7,7 +7,7 @@ const VM = @import("./vm.zig").VM;
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     const a = std.heap.c_allocator;
-    var vm = VM.init(stdout);
+    var vm = try VM.init(a, stdout);
     defer vm.free();
     var chunk = try Chunk.init(a);
     defer chunk.free();

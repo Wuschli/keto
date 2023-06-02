@@ -8,6 +8,7 @@ pub fn build(b: *std.build.Builder) void {
 
     const build_options = b.addOptions();
     build_options.addOption(bool, "trace", b.option(bool, "trace", "print trace during execution") orelse false);
+    build_options.addOption(u32, "stackSize", b.option(u32, "stackSize", "maximum stack size") orelse 256);
 
     const lib = b.addSharedLibrary("keto", "src/keto.zig", b.version(0, 0, 1));
     lib.linkLibC();
@@ -25,6 +26,7 @@ pub fn build(b: *std.build.Builder) void {
 
     const tests = b.addTest("src/keto.zig");
     tests.linkLibC();
+    tests.addOptions("build_options", build_options);
     tests.setBuildMode(mode);
 
     const test_step = b.step("test", "Run library tests");

@@ -4,6 +4,7 @@ const OpCode = c.OpCode;
 const std = @import("std");
 const Writer = std.fs.File.Writer;
 const Value = @import("./value.zig").Value;
+const VM = @import("./vm.zig").VM;
 
 pub fn disassembleChunk(self: *Chunk, name: []const u8, writer: Writer) !void {
     try writer.print("=== {s} ===\n", .{name});
@@ -48,4 +49,16 @@ pub fn constantInstruction(opcode: OpCode, chunk: *Chunk, offset: usize, writer:
 
 pub fn printValue(value: Value, writer: Writer) !void {
     try writer.print("'{}'", .{value});
+}
+
+pub fn printStack(vm: *VM) !void {
+    try vm.writer.print("             Stack: ", .{});
+    for (vm.stack) |*value| {
+        if (@ptrToInt(value) >= @ptrToInt(vm.stackTop.ptr))
+            break;
+        try vm.writer.print("[ ", .{});
+        try printValue(value.*, vm.writer);
+        try vm.writer.print(" ]", .{});
+    }
+    try vm.writer.print("\n", .{});
 }
