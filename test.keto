@@ -1,9 +1,11 @@
 // comment that is ignored
-"Hello, World!"
-();
-and
-cla
-class
-this
-true
-0.
+//"Hello, World!"
+//();
+//and
+//cla
+//class
+//this
+//true
+//0.
+
+(1+2)*3

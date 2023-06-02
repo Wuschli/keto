@@ -6,14 +6,12 @@ const v = @import("./vm.zig");
 const VM = v.VM;
 const build_options = @import("build_options");
 const Allocator = std.mem.Allocator;
-const Writer = std.fs.File.Writer;
 const InterpretResult = v.InterpretResult;
 
 pub fn main() !u8 {
     const argv = std.os.argv;
-    const stdout = std.io.getStdOut().writer();
     const a = std.heap.c_allocator;
-    var vm = try VM.init(a, stdout);
+    var vm = try VM.init(a);
     defer vm.free();
     if (argv.len == 1) {
         try repl();
@@ -58,17 +56,13 @@ fn runFile(vm: *VM, path: []const u8, a: Allocator) !InterpretResult {
         value.* = 0x00;
     }
     const bytes_read = try file.read(buffer);
-
-    // const size_limit = std.math.maxInt(u32);
-    // var source = try file.read(a, size_limit);
-    // defer a.free(source);
     const source = buffer[0..bytes_read];
 
     // if (build_options.trace) {
     //     try writer.writeAll(source);
-    //     try writer.print("\n", .{});
+    //     try keto.log.info("\n", .{});
     // }
 
-    const result = try vm.interpret(source);
+    const result = try vm.interpret(source, a);
     return result;
 }

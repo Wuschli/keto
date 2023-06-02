@@ -5,10 +5,10 @@ const v = @import("./value.zig");
 const Value = v.Value;
 const Debug = @import("./debug.zig");
 const std = @import("std");
-const Writer = std.fs.File.Writer;
 const build_options = @import("build_options");
 const Allocator = std.mem.Allocator;
 const compiler = @import("./compiler.zig");
+const keto = @import("./keto.zig");
 
 pub const InterpretResult = enum {
     ok,
@@ -23,16 +23,14 @@ pub const VM = struct {
     ip: ?[*]u8,
     stack: []Value,
     stackTop: []Value,
-    writer: Writer,
 
-    pub fn init(a: Allocator, writer: Writer) !Self {
+    pub fn init(a: Allocator) !Self {
         var vm = Self{
             .a = a,
             .chunk = null,
             .ip = null,
             .stack = try a.alloc(Value, build_options.stackSize),
             .stackTop = undefined,
-            .writer = writer,
         };
         vm.resetStack();
         return vm;
@@ -48,21 +46,27 @@ pub const VM = struct {
         self.stackTop = self.stack[0..];
     }
 
-    pub fn interpret(self: *Self, source: []const u8) !InterpretResult {
-        try compiler.compile(source, self.writer);
-        // self.chunk = chunk;
-        if (self.chunk == null)
+    pub fn interpret(self: *Self, source: []const u8, a: Allocator) !InterpretResult {
+        var chunk = try Chunk.init(a);
+        defer chunk.free();
+
+        if (!try compiler.compile(source, &chunk, a)) {
+            return .compile_error;
+        }
+
+        self.chunk = &chunk;
+        if (self.chunk.?.code.items.len == 0)
             return .compile_error;
         self.ip = self.chunk.?.code.items.ptr;
-        return try self.run();
+        return self.run();
     }
 
-    fn run(self: *Self) !InterpretResult {
+    fn run(self: *Self) InterpretResult {
         while (true) {
             if (build_options.trace) {
-                try self.writer.print("\n", .{});
-                try Debug.printStack(self);
-                _ = try Debug.disassembleInstruction(self.chunk.?, @ptrToInt(self.ip.?) - @ptrToInt(self.chunk.?.code.items.ptr), self.writer);
+                keto.log.info("\n", .{});
+                Debug.printStack(self);
+                _ = Debug.disassembleInstruction(self.chunk.?, @ptrToInt(self.ip.?) - @ptrToInt(self.chunk.?.code.items.ptr));
             }
             const instruction = self.readByte();
             switch (@intToEnum(OpCode, instruction)) {
@@ -75,9 +79,9 @@ pub const VM = struct {
                 .SUBTRACT => self.binaryOp(sub),
                 .MULTIPLY => self.binaryOp(mul),
                 .DIVIDE => self.binaryOp(div),
-                .RET => {
-                    try Debug.printValue(self.pop(), self.writer);
-                    try self.writer.print("\n", .{});
+                .RETURN => {
+                    Debug.printValue(self.pop());
+                    keto.log.info("\n", .{});
                     return .ok;
                 },
                 _ => return .runtime_error,
@@ -139,8 +143,8 @@ test "init stack" {
     defer vm.free();
     const stackAddr = @ptrToInt(vm.stack.ptr);
     const stackTopAddr = @ptrToInt(vm.stackTop.ptr);
-    // std.log.warn("0x{x}, 0x{x}", .{ stackAddr, stackTopAddr });
-    // std.log.warn("{d}, {d}", .{ stackAddr, stackTopAddr });
+    // keto.log.warn("0x{x}, 0x{x}", .{ stackAddr, stackTopAddr });
+    // keto.log.warn("{d}, {d}", .{ stackAddr, stackTopAddr });
     try std.testing.expect(stackAddr == stackTopAddr);
 }
 
@@ -152,7 +156,7 @@ test "push" {
     var vm = try VM.init(a, stdout);
     defer vm.free();
     vm.push(3.1415);
-    // std.log.warn("{any}, {d}\n", .{ vm.stack, vm.stackTop[0] });
+    // keto.log.warn("{any}, {d}\n", .{ vm.stack, vm.stackTop[0] });
     try std.testing.expect(vm.stack[0] == 3.1415);
     try std.testing.expect(vm.stackTop[0] == 0);
 }
@@ -165,7 +169,7 @@ test "pop" {
     var vm = try VM.init(a, stdout);
     defer vm.free();
     vm.push(3.1415);
-    // std.log.warn("{any}, {d}\n", .{ vm.stack, vm.stackTop[0] });
+    // keto.log.warn("{any}, {d}\n", .{ vm.stack, vm.stackTop[0] });
     try std.testing.expect(vm.stack[0] == 3.1415);
     try std.testing.expect(vm.stackTop[0] == 0);
     const pi = vm.pop();

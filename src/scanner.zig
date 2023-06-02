@@ -3,14 +3,14 @@ const Line = c.Line;
 const std = @import("std");
 const fmt = std.fmt;
 
-const Token = struct {
+pub const Token = struct {
     const Self = @This();
     type: TokenType,
     start: []const u8,
     line: Line,
 };
 
-const TokenType = enum {
+pub const TokenType = enum {
     // Single-character tokens.
     LEFT_PAREN,
     RIGHT_PAREN,

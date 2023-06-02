@@ -2,68 +2,73 @@ const c = @import("./chunk.zig");
 const Chunk = c.Chunk(u8);
 const OpCode = c.OpCode;
 const std = @import("std");
-const Writer = std.fs.File.Writer;
 const Value = @import("./value.zig").Value;
 const VM = @import("./vm.zig").VM;
+const keto = @import("./keto.zig");
 
-pub fn disassembleChunk(self: *Chunk, name: []const u8, writer: Writer) !void {
-    try writer.print("=== {s} ===\n", .{name});
+pub fn disassembleChunk(self: *Chunk, name: []const u8) void {
+    keto.log.info("=== {s} ===\n", .{name});
     var offset: usize = 0;
     while (offset < self.count()) {
-        offset = try disassembleInstruction(self, offset, writer);
+        offset = disassembleInstruction(
+            self,
+            offset,
+        );
     }
 }
 
-pub fn disassembleInstruction(self: *Chunk, offset: usize, writer: Writer) !usize {
-    try writer.print("[{x:0>4}] ", .{offset});
+pub fn disassembleInstruction(self: *Chunk, offset: usize) usize {
+    keto.log.info("[{x:0>4}] ", .{offset});
     if (offset > 0 and self.lines.items[offset] == self.lines.items[offset - 1]) {
-        try writer.print("    | ", .{});
+        keto.log.info("    | ", .{});
+    } else if (self.lines.items.len > 0) {
+        keto.log.info("{d: >5} ", .{self.lines.items[offset]});
     } else {
-        try writer.print("{d: >5} ", .{self.lines.items[offset]});
+        keto.log.info("????? ", .{});
     }
     const instruction = self.code.items[offset];
     switch (@intToEnum(OpCode, instruction)) {
-        .CONSTANT => return constantInstruction(.CONSTANT, self, offset, writer),
-        .NEGATE => return simpleInstruction(.NEGATE, offset, writer),
-        .ADD => return simpleInstruction(.ADD, offset, writer),
-        .SUBTRACT => return simpleInstruction(.SUBTRACT, offset, writer),
-        .MULTIPLY => return simpleInstruction(.MULTIPLY, offset, writer),
-        .DIVIDE => return simpleInstruction(.DIVIDE, offset, writer),
-        .RET => return simpleInstruction(.RET, offset, writer),
+        .CONSTANT => return constantInstruction(.CONSTANT, self, offset),
+        .NEGATE => return simpleInstruction(.NEGATE, offset),
+        .ADD => return simpleInstruction(.ADD, offset),
+        .SUBTRACT => return simpleInstruction(.SUBTRACT, offset),
+        .MULTIPLY => return simpleInstruction(.MULTIPLY, offset),
+        .DIVIDE => return simpleInstruction(.DIVIDE, offset),
+        .RETURN => return simpleInstruction(.RETURN, offset),
         _ => {
-            try writer.print("Unknown opcode {x:0>2}\n", .{instruction});
+            keto.log.info("Unknown opcode {x:0>2}\n", .{instruction});
             return offset + 1;
         },
     }
     return offset + 1;
 }
 
-pub fn simpleInstruction(opcode: OpCode, offset: usize, writer: Writer) !usize {
-    try writer.print("{s}\n", .{@tagName(opcode)});
+pub fn simpleInstruction(opcode: OpCode, offset: usize) usize {
+    keto.log.info("{s}\n", .{@tagName(opcode)});
     return offset + 1;
 }
 
-pub fn constantInstruction(opcode: OpCode, chunk: *Chunk, offset: usize, writer: Writer) !usize {
+pub fn constantInstruction(opcode: OpCode, chunk: *Chunk, offset: usize) usize {
     const constant = chunk.code.items[offset + 1];
-    try writer.print("{s}\t{d: >4}: ", .{ @tagName(opcode), constant });
+    keto.log.info("{s}\t{d: >4}: ", .{ @tagName(opcode), constant });
 
-    try printValue(chunk.constants.items[constant], writer);
-    try writer.print("\n", .{});
+    printValue(chunk.constants.items[constant]);
+    keto.log.info("\n", .{});
     return offset + 2;
 }
 
-pub fn printValue(value: Value, writer: Writer) !void {
-    try writer.print("'{}'", .{value});
+pub fn printValue(value: Value) void {
+    keto.log.info("'{}'", .{value});
 }
 
-pub fn printStack(vm: *VM) !void {
-    try vm.writer.print("             Stack: ", .{});
+pub fn printStack(vm: *VM) void {
+    keto.log.info("             Stack: ", .{});
     for (vm.stack) |*value| {
         if (@ptrToInt(value) >= @ptrToInt(vm.stackTop.ptr))
             break;
-        try vm.writer.print("[ ", .{});
-        try printValue(value.*, vm.writer);
-        try vm.writer.print(" ]", .{});
+        keto.log.info("[ ", .{});
+        printValue(value.*);
+        keto.log.info(" ]", .{});
     }
-    try vm.writer.print("\n", .{});
+    keto.log.info("\n", .{});
 }
