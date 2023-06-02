@@ -66,6 +66,11 @@ pub const VM = struct {
                     const value = self.readConstant();
                     self.push(value);
                 },
+                .op_negate => self.push(-self.pop()),
+                .op_add => self.binaryOp(add),
+                .op_subtract => self.binaryOp(sub),
+                .op_multiply => self.binaryOp(mul),
+                .op_divide => self.binaryOp(div),
                 .op_return => {
                     try Debug.printValue(self.pop(), self.writer);
                     try self.writer.print("\n", .{});
@@ -97,6 +102,28 @@ pub const VM = struct {
         self.stackTop.ptr -= 1;
         self.stackTop.len += 1;
         return self.stackTop[0];
+    }
+
+    fn binaryOp(self: *Self, comptime op: fn (Value, Value) Value) void {
+        const b = self.pop();
+        const a = self.pop();
+        self.push(op(a, b));
+    }
+
+    fn add(a: Value, b: Value) Value {
+        return a + b;
+    }
+
+    fn sub(a: Value, b: Value) Value {
+        return a - b;
+    }
+
+    fn mul(a: Value, b: Value) Value {
+        return a * b;
+    }
+
+    fn div(a: Value, b: Value) Value {
+        return a / b;
     }
 };
 test "init stack" {

@@ -24,8 +24,13 @@ pub fn disassembleInstruction(self: *Chunk, offset: usize, writer: Writer) !usiz
     const instruction = self.code.items[offset];
     switch (@intToEnum(OpCode, instruction)) {
         .op_constant => return constantInstruction(.op_constant, self, offset, writer),
+        .op_negate => return simpleInstruction(.op_negate, offset, writer),
+        .op_add => return simpleInstruction(.op_add, offset, writer),
+        .op_subtract => return simpleInstruction(.op_subtract, offset, writer),
+        .op_multiply => return simpleInstruction(.op_multiply, offset, writer),
+        .op_divide => return simpleInstruction(.op_divide, offset, writer),
         .op_return => return simpleInstruction(.op_return, offset, writer),
-        else => {
+        _ => {
             try writer.print("Unknown opcode {x:0>2}\n", .{instruction});
             return offset + 1;
         },
