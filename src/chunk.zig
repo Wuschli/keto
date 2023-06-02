@@ -2,7 +2,7 @@ const std = @import("std");
 const v = @import("./value.zig");
 const ValueArray = v.ValueArray;
 const Value = v.Value;
-const Line = u32;
+pub const Line = u32;
 const Allocator = std.mem.Allocator;
 
 const ChunkError = error{
@@ -10,13 +10,13 @@ const ChunkError = error{
 };
 
 pub const OpCode = enum(u8) {
-    op_constant,
-    op_negate,
-    op_add,
-    op_subtract,
-    op_multiply,
-    op_divide,
-    op_return,
+    CONSTANT,
+    NEGATE,
+    ADD,
+    SUBTRACT,
+    MULTIPLY,
+    DIVIDE,
+    RET,
     _,
 };
 
@@ -102,17 +102,17 @@ test "write OpCode" {
     const a = std.testing.allocator;
     var chunk = try Chunk(u8).init(a);
     defer chunk.free();
-    try chunk.writeOpCode(.op_return, 123);
+    try chunk.writeOpCode(.ret, 123);
     try std.testing.expect(chunk.code.items.len == 1);
 }
 
 test "free Chunk" {
     const a = std.testing.allocator;
     var chunk = try Chunk(u8).init(a);
-    try chunk.writeOpCode(.op_return, 123);
+    try chunk.writeOpCode(.ret, 123);
     try std.testing.expect(chunk.code.items.len == 1);
     chunk.free();
-    try std.testing.expectError(ChunkError.ChunkFreed, chunk.writeOpCode(.op_return, 123));
+    try std.testing.expectError(ChunkError.ChunkFreed, chunk.writeOpCode(.ret, 123));
 }
 
 test "add constant" {

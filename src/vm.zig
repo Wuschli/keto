@@ -8,6 +8,7 @@ const std = @import("std");
 const Writer = std.fs.File.Writer;
 const build_options = @import("build_options");
 const Allocator = std.mem.Allocator;
+const compiler = @import("./compiler.zig");
 
 pub const InterpretResult = enum {
     ok,
@@ -47,8 +48,11 @@ pub const VM = struct {
         self.stackTop = self.stack[0..];
     }
 
-    pub fn interpret(self: *Self, chunk: *Chunk) !InterpretResult {
-        self.chunk = chunk;
+    pub fn interpret(self: *Self, source: []const u8) !InterpretResult {
+        try compiler.compile(source, self.writer);
+        // self.chunk = chunk;
+        if (self.chunk == null)
+            return .compile_error;
         self.ip = self.chunk.?.code.items.ptr;
         return try self.run();
     }
@@ -62,16 +66,16 @@ pub const VM = struct {
             }
             const instruction = self.readByte();
             switch (@intToEnum(OpCode, instruction)) {
-                .op_constant => {
+                .CONSTANT => {
                     const value = self.readConstant();
                     self.push(value);
                 },
-                .op_negate => self.push(-self.pop()),
-                .op_add => self.binaryOp(add),
-                .op_subtract => self.binaryOp(sub),
-                .op_multiply => self.binaryOp(mul),
-                .op_divide => self.binaryOp(div),
-                .op_return => {
+                .NEGATE => self.push(-self.pop()),
+                .ADD => self.binaryOp(add),
+                .SUBTRACT => self.binaryOp(sub),
+                .MULTIPLY => self.binaryOp(mul),
+                .DIVIDE => self.binaryOp(div),
+                .RET => {
                     try Debug.printValue(self.pop(), self.writer);
                     try self.writer.print("\n", .{});
                     return .ok;

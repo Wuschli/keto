@@ -6,7 +6,9 @@
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/debug/bin/keto",
-            "args": [],
+            "args": [
+                "./test.keto"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -23,7 +25,9 @@
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/release/bin/keto",
-            "args": [],
+            "args": [
+                "./test.keto"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
