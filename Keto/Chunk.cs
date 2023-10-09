@@ -19,16 +19,6 @@ public class Chunk
         _lines.Add(line);
     }
 
-    public void Write(int value, int line)
-    {
-        Write((byte)value, line);
-    }
-
-    public void Write(OpCode opCode, int line)
-    {
-        Write((byte)opCode, line);
-    }
-
     public int AddConstant(Value value)
     {
         _constants.Add(value);

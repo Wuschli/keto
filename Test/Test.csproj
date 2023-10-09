@@ -12,4 +12,10 @@
     <ProjectReference Include="..\Keto\Keto.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="test.keto">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

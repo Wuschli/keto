@@ -10,7 +10,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<DefineConstants>$(DefineConstants);DEBUG_TRACE_EXECUTION</DefineConstants>
+		<DefineConstants>$(DefineConstants);DEBUG_TRACE_EXECUTION;DEBUG_PRINT_CODE</DefineConstants>
 	</PropertyGroup>
 
 </Project>

@@ -1,15 +1,45 @@
 ﻿using Keto;
 
-var chunk = new Chunk();
+internal class Program
+{
+    public static void Main(string[] args)
+    {
+        var vm = new VM();
 
-var constant = chunk.AddConstant(1.2);
-chunk.Write(OpCode.Constant, 123);
-chunk.Write(constant, 123);
-chunk.Write(OpCode.Negate, 123);
+        if (args.Length == 0)
+            Repl(vm);
+        else if (args.Length == 1)
+            RunFile(vm, args[0]);
+        else
+        {
+            Console.Error.WriteLine("Usage: keto [path]");
+            Environment.Exit(64);
+        }
+    }
 
-chunk.Write(OpCode.Return, 123);
-chunk.Disassemble("test chunk");
+    private static void RunFile(VM vm, string path)
+    {
+        var source = File.ReadAllText(path);
+        var result = vm.Interpret(source);
 
-using var vm = new VM();
+        if (result == InterpretResult.CompileError) Environment.Exit(65);
+        if (result == InterpretResult.RuntimeError) Environment.Exit(70);
+    }
 
-vm.Interpret(chunk);
+    private static void Repl(VM vm)
+    {
+        while (true)
+        {
+            Console.Write("> ");
+
+            var line = Console.ReadLine();
+            if (string.IsNullOrEmpty(line))
+            {
+                Console.WriteLine();
+                Environment.Exit(0);
+            }
+
+            vm.Interpret(line);
+        }
+    }
+}
