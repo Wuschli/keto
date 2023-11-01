@@ -30,17 +30,20 @@ public static class Debug
         {
             case (byte)OpCode.Constant:
                 return ConstantInstruction(((OpCode)instruction).ToString().ToUpper(), chunk, offset);
+
+            case (byte)OpCode.Nil:
+            case (byte)OpCode.True:
+            case (byte)OpCode.False:
+            case (byte)OpCode.Equal:
+            case (byte)OpCode.Greater:
+            case (byte)OpCode.Less:
             case (byte)OpCode.Return:
-                return SimpleInstruction(((OpCode)instruction).ToString().ToUpper(), offset);
             case (byte)OpCode.Negate:
-                return SimpleInstruction(((OpCode)instruction).ToString().ToUpper(), offset);
             case (byte)OpCode.Add:
-                return SimpleInstruction(((OpCode)instruction).ToString().ToUpper(), offset);
             case (byte)OpCode.Subtract:
-                return SimpleInstruction(((OpCode)instruction).ToString().ToUpper(), offset);
             case (byte)OpCode.Multiply:
-                return SimpleInstruction(((OpCode)instruction).ToString().ToUpper(), offset);
             case (byte)OpCode.Divide:
+            case (byte)OpCode.Not:
                 return SimpleInstruction(((OpCode)instruction).ToString().ToUpper(), offset);
             default:
                 Print($"Unknown opcode {instruction:D}\n");
@@ -63,13 +66,29 @@ public static class Debug
         return offset + 1;
     }
 
-    public static void PrintValue(double value)
+    public static void PrintValue(Value value)
     {
-        Print($"{value:G}");
+        switch (value.Type)
+        {
+            case ValueType.Bool:
+                Print(value.ToBool() ? "true" : "false");
+                break;
+            case ValueType.Nil:
+                Print("nil");
+                break;
+            case ValueType.Number:
+                Print($"{value.ToNumber():G}");
+                break;
+        }
     }
 
     public static void Print(string value)
     {
         Console.Write(value);
+    }
+
+    public static void PrintError(string value)
+    {
+        Console.Error.Write(value);
     }
 }

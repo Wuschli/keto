@@ -1,7 +1,5 @@
 ﻿namespace Keto;
 
-using Value = Double;
-
 public class Chunk
 {
     private readonly List<byte> _code = new();

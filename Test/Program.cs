@@ -12,7 +12,7 @@ internal class Program
             RunFile(vm, args[0]);
         else
         {
-            Console.Error.WriteLine("Usage: keto [path]");
+            Debug.PrintError("Usage: keto [path]\n");
             Environment.Exit(64);
         }
     }
